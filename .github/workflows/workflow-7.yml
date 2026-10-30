@@ -1,0 +1,24 @@
+name: Workflow 7
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  job-1:
+    if: ${{ github.actor != 'dependabot[bot]' && !startsWith(github.ref, 'refs/heads/gh-readonly-queue/') }}
+    runs-on: ubuntu-latest
+    name: Job 1
+    steps:
+      - name: Dummy step 1
+        uses: actions/checkout@v6
+
+      - name: Dummy step 2
+        id: step-1
+        run: echo "dummy step"
+
+      - name: Dummy step 3
+        id: step-2
+        run: echo "dummy step"
