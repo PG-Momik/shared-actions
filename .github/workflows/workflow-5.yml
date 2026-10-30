@@ -1,0 +1,144 @@
+name: Workflow 5
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  job-1:
+    name: Job 1
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.step-1.outputs.enabled }}
+    steps:
+      - name: Dummy step 1
+        id: step-1
+        run: echo "dummy step"
+
+  job-2:
+    name: Job 2
+    needs: job-1
+    if: needs.job-1.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.step-1.outputs.changed }}
+    steps:
+      - name: Dummy step 1
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Dummy step 2
+        id: step-1
+        run: echo "dummy step"
+
+  job-3:
+    name: Job 3
+    needs: job-2
+    if: needs.job-2.outputs.changed == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    outputs:
+      retry: ${{ steps.step-2.outputs.retry }}
+      verdict: ${{ steps.step-3.outputs.verdict }}
+      findings: ${{ steps.step-3.outputs.findings }}
+    steps:
+      - name: Dummy step 1
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Dummy step 2
+        run: echo "dummy step"
+      - name: Dummy step 3
+        run: echo "dummy step"
+      - name: Dummy step 4
+        run: echo "dummy step"
+      - name: Dummy step 5
+        id: step-1
+        continue-on-error: true
+        run: echo "dummy step"
+      - name: Dummy step 6
+        id: step-2
+        if: always()
+        run: echo "dummy step"
+      - name: Dummy step 7
+        id: step-3
+        if: steps.step-1.outcome == 'success'
+        run: echo "dummy step"
+
+  job-4:
+    name: Job 4
+    needs: job-3
+    if: >-
+      !cancelled() &&
+      (needs.job-3.outputs.retry == 'true' ||
+      (needs.job-3.result == 'failure' &&
+      needs.job-3.outputs.retry == ''))
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    outputs:
+      verdict: ${{ steps.step-1.outputs.verdict }}
+      findings: ${{ steps.step-1.outputs.findings }}
+    steps:
+      - name: Dummy step 1
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Dummy step 2
+        run: echo "dummy step"
+      - name: Dummy step 3
+        run: echo "dummy step"
+      - name: Dummy step 4
+        run: echo "dummy step"
+      - name: Dummy step 5
+        run: echo "dummy step"
+      - name: Dummy step 6
+        id: step-1
+        run: echo "dummy step"
+
+  job-5:
+    name: Job 5
+    needs: [job-3, job-4]
+    if: >-
+      !cancelled() &&
+      (needs.job-3.outputs.verdict == 'findings' ||
+      (needs.job-3.outputs.verdict == '' &&
+      needs.job-4.outputs.verdict == 'findings'))
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    outputs:
+      confirmed: ${{ steps.step-1.outputs.confirmed }}
+    steps:
+      - name: Dummy step 1
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Dummy step 2
+        run: echo "dummy step"
+      - name: Dummy step 3
+        run: echo "dummy step"
+      - name: Dummy step 4
+        run: echo "dummy step"
+      - name: Dummy step 5
+        run: echo "dummy step"
+      - name: Dummy step 6
+        run: echo "dummy step"
+      - name: Dummy step 7
+        id: step-1
+        run: echo "dummy step"
+
+  job-6:
+    name: Job 6
+    needs: [job-1, job-2, job-3, job-4, job-5]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dummy step 1
+        run: echo "dummy step"
