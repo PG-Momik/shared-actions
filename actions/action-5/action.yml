@@ -5,4 +5,4 @@ runs:
   steps:
     - name: Dummy step 1
       shell: bash
-      run: echo "dummy step"
+      run: node "$GITHUB_ACTION_PATH/check.js"

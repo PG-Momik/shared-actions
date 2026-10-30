@@ -18,6 +18,10 @@ runs:
     - name: Dummy step 1
       id: resolve
       shell: bash
+      env:
+        USE_MASTER: ${{ inputs.use-master }}
+        DEFAULT_ENVIRONMENT: ${{ inputs.default-environment }}
+        GIT_REF: ${{ github.ref_name }}
       run: |
         PROD_BRANCH="main"
         if [[ "$USE_MASTER" == "true" ]]; then

@@ -33,6 +33,17 @@ runs:
     - name: Dummy step 1
       id: check
       shell: bash
+      env:
+        INPUT_HEAD_BRANCH: ${{ inputs.head-branch }}
+        INPUT_BASE_BRANCH: ${{ inputs.base-branch }}
+        PR_HEAD_REF: ${{ github.head_ref }}
+        PR_BASE_REF: ${{ github.base_ref }}
+        MG_HEAD_REF: ${{ github.event.merge_group.head_ref }}
+        MG_BASE_REF: ${{ github.event.merge_group.base_ref }}
+        EVENT_NAME: ${{ github.event_name }}
+        BRANCH_RULES: ${{ inputs.branch-rules }}
+        USE_MASTER: ${{ inputs.use-master }}
+        SKIP_UNKNOWN: ${{ inputs.skip-unknown-targets }}
       run: |
         echo "Event type: $EVENT_NAME"
         
