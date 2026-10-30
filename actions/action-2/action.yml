@@ -1,0 +1,174 @@
+name: 'Action 2'
+
+inputs:
+  branch-rules:
+    required: false
+    default: |
+      main:staging,hotfix/*
+      staging:dev,hotfix/*
+  use-master:
+    required: false
+    default: 'false'
+  skip-unknown-targets:
+    required: false
+    default: 'true'
+  head-branch:
+    required: false
+    default: ''
+  base-branch:
+    required: false
+    default: ''
+
+outputs:
+  is-valid:
+    value: ${{ steps.check.outputs.is_valid }}
+  matched-pattern:
+    value: ${{ steps.check.outputs.matched_pattern }}
+  skipped:
+    value: ${{ steps.check.outputs.skipped }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Dummy step 1
+      id: check
+      shell: bash
+      run: |
+        echo "Event type: $EVENT_NAME"
+        
+        if [[ "$EVENT_NAME" == "merge_group" ]]; then
+          echo ""
+          echo "=========================================="
+          echo "Skipping branch validation for merge_group event"
+          echo "=========================================="
+          echo ""
+          echo "PRs in the merge queue have already passed branch validation."
+          echo "The merge queue branch (gh-readonly-queue/...) is a temporary branch"
+          echo "created by GitHub to test the merged result."
+          echo ""
+          echo "is_valid=true" >> $GITHUB_OUTPUT
+          echo "matched_pattern=" >> $GITHUB_OUTPUT
+          echo "skipped=true" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        if [[ -n "$INPUT_HEAD_BRANCH" ]]; then
+          HEAD_BRANCH="$INPUT_HEAD_BRANCH"
+        else
+          HEAD_BRANCH="$PR_HEAD_REF"
+        fi
+        
+        if [[ -n "$INPUT_BASE_BRANCH" ]]; then
+          BASE_BRANCH="$INPUT_BASE_BRANCH"
+        else
+          BASE_BRANCH="$PR_BASE_REF"
+        fi
+        
+        echo "Source branch: $HEAD_BRANCH"
+        echo "Target branch: $BASE_BRANCH"
+        echo ""
+        
+        if [[ "$USE_MASTER" == "true" ]]; then
+          BRANCH_RULES="${BRANCH_RULES//main:/master:}"
+          echo "Using master instead of main in rules"
+        fi
+        
+        echo "Branch rules:"
+        echo "$BRANCH_RULES"
+        echo ""
+        
+        allowed_branches=""
+        while IFS= read -r rule; do
+          [[ -z "$rule" ]] && continue
+          
+          target="${rule%%:*}"
+          allowed="${rule#*:}"
+          
+          target=$(echo "$target" | xargs)
+          allowed=$(echo "$allowed" | xargs)
+          
+          if [[ "$target" == "$BASE_BRANCH" ]]; then
+            allowed_branches="$allowed"
+            break
+          fi
+        done <<< "$BRANCH_RULES"
+        
+        if [[ -z "$allowed_branches" ]]; then
+          if [[ "$SKIP_UNKNOWN" == "true" ]]; then
+            echo "ℹ️  Target branch '$BASE_BRANCH' has no rules defined. Skipping validation."
+            echo "is_valid=true" >> $GITHUB_OUTPUT
+            echo "matched_pattern=" >> $GITHUB_OUTPUT
+            echo "skipped=true" >> $GITHUB_OUTPUT
+            exit 0
+          else
+            echo ""
+            echo "=========================================="
+            echo "❌ UNKNOWN TARGET BRANCH"
+            echo "=========================================="
+            echo ""
+            echo "Target branch '$BASE_BRANCH' has no rules defined."
+            echo "Add a rule for this branch or set skip-unknown-targets to true."
+            echo ""
+            echo "is_valid=false" >> $GITHUB_OUTPUT
+            echo "matched_pattern=" >> $GITHUB_OUTPUT
+            echo "skipped=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+        fi
+        
+        echo "Allowed patterns for '$BASE_BRANCH': $allowed_branches"
+        echo ""
+        
+        IFS=',' read -ra PATTERNS <<< "$allowed_branches"
+        
+        is_valid="false"
+        matched_pattern=""
+        
+        for pattern in "${PATTERNS[@]}"; do
+          pattern=$(echo "$pattern" | xargs)
+          
+          if [[ "$pattern" == *"*" ]]; then
+            prefix="${pattern%\*}"
+            if [[ "$HEAD_BRANCH" == "$prefix"* ]]; then
+              is_valid="true"
+              matched_pattern="$pattern"
+              break
+            fi
+          else
+            if [[ "$HEAD_BRANCH" == "$pattern" ]]; then
+              is_valid="true"
+              matched_pattern="$pattern"
+              break
+            fi
+          fi
+        done
+        
+        echo "is_valid=$is_valid" >> $GITHUB_OUTPUT
+        echo "matched_pattern=$matched_pattern" >> $GITHUB_OUTPUT
+        echo "skipped=false" >> $GITHUB_OUTPUT
+        
+        if [[ "$is_valid" == "false" ]]; then
+          echo ""
+          echo "=========================================="
+          echo "❌ BRANCH VALIDATION FAILED"
+          echo "=========================================="
+          echo ""
+          echo "Source branch: $HEAD_BRANCH"
+          echo "Target branch: $BASE_BRANCH"
+          echo ""
+          echo "ERROR: You can only merge to '$BASE_BRANCH' from:"
+          for pattern in "${PATTERNS[@]}"; do
+            pattern=$(echo "$pattern" | xargs)
+            echo "  • $pattern"
+          done
+          echo ""
+          echo "=========================================="
+          exit 1
+        else
+          echo ""
+          echo "✅ Branch validation passed!"
+          echo "   Source: $HEAD_BRANCH"
+          echo "   Target: $BASE_BRANCH"
+          echo "   Matched pattern: $matched_pattern"
+          echo ""
+        fi

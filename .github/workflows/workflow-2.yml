@@ -1,0 +1,53 @@
+name: Workflow 2
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  merge_group:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  job-1:
+    name: Job 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Dummy step 1
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Dummy step 2
+        run: echo "dummy step"
+
+      - name: Dummy step 3
+        run: echo "dummy step"
+
+      - name: Dummy step 4
+        run: echo "dummy step"
+
+      - name: Dummy step 5
+        run: echo "dummy step"
+
+      - name: Dummy step 6
+        run: echo "dummy step"
+
+      - name: Dummy step 7
+        run: echo "dummy step"
+
+      - name: Dummy step 8
+        run: echo "dummy step"
+
+      - name: Dummy step 9
+        run: echo "dummy step"
+
+      - name: Dummy step 10
+        run: echo "dummy step"
+
+      - name: Dummy step 11
+        run: echo "dummy step"

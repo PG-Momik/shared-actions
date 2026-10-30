@@ -1,0 +1,8 @@
+name: 'Action 5'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Dummy step 1
+      shell: bash
+      run: echo "dummy step"

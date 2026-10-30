@@ -1,0 +1,26 @@
+name: 'Action 3'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Dummy step 1
+      shell: bash
+      run: |
+        set -euo pipefail
+        git fetch --tags --force --quiet
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        BASE="v$(date -u +'%Y.%m.%d')"
+        TAG="$BASE"
+        N=1
+        while git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; do
+          TAG="$BASE.$N"
+          N=$((N+1))
+        done
+        git tag -a "$TAG" -m "Release $TAG"
+        git push origin "$TAG"
+        echo "Cut $TAG"
+
+    - name: Dummy step 2
+      shell: bash
+      run: echo "dummy step"

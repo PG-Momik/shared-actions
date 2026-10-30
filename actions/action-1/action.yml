@@ -1,0 +1,35 @@
+name: 'Action 1'
+
+inputs:
+  use-master:
+    required: false
+    default: 'false'
+  default-environment:
+    required: false
+    default: 'dev'
+
+outputs:
+  environment:
+    value: ${{ steps.resolve.outputs.environment }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Dummy step 1
+      id: resolve
+      shell: bash
+      run: |
+        PROD_BRANCH="main"
+        if [[ "$USE_MASTER" == "true" ]]; then
+          PROD_BRANCH="master"
+        fi
+
+        case "$GIT_REF" in
+          dev)            ENVIRONMENT="dev" ;;
+          staging)        ENVIRONMENT="staging" ;;
+          "$PROD_BRANCH") ENVIRONMENT="production" ;;
+          *)              ENVIRONMENT="$DEFAULT_ENVIRONMENT" ;;
+        esac
+
+        echo "environment=$ENVIRONMENT" >> "$GITHUB_OUTPUT"
+        echo "Resolved environment: $ENVIRONMENT (branch: $GIT_REF, production branch: $PROD_BRANCH)"

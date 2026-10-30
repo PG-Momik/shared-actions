@@ -1,0 +1,25 @@
+name: Workflow 1
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  merge_group:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  job-1:
+    name: Job 1
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dummy step 1
+        uses: actions/checkout@v6
+      - name: Dummy step 2
+        run: echo "dummy step"
+      - name: Dummy step 3
+        run: echo "dummy step"
