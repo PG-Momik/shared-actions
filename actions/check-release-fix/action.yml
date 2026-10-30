@@ -1,0 +1,17 @@
+name: Check release fix
+description: Require every release PR commit to already exist on the trunk by patch
+inputs:
+  base-branch:
+    required: true
+  trunk-branch:
+    required: false
+    default: main
+runs:
+  using: composite
+  steps:
+    - name: Check release commits
+      shell: bash
+      env:
+        BASE_BRANCH: ${{ inputs.base-branch }}
+        TRUNK_BRANCH: ${{ inputs.trunk-branch }}
+      run: bash "$GITHUB_ACTION_PATH/run.sh"

@@ -1,4 +1,4 @@
-name: 'Action 1'
+name: '[Updated] Action 1'
 
 inputs:
   use-master:
@@ -7,10 +7,18 @@ inputs:
   default-environment:
     required: false
     default: 'dev'
+  trunk-based:
+    required: false
+    default: 'false'
+  version-scheme:
+    required: false
+    default: 'calver'
 
 outputs:
   environment:
     value: ${{ steps.resolve.outputs.environment }}
+  release-branch:
+    value: ${{ steps.resolve.outputs.release-branch }}
 
 runs:
   using: 'composite'
@@ -21,19 +29,7 @@ runs:
       env:
         USE_MASTER: ${{ inputs.use-master }}
         DEFAULT_ENVIRONMENT: ${{ inputs.default-environment }}
-        GIT_REF: ${{ github.ref_name }}
-      run: |
-        PROD_BRANCH="main"
-        if [[ "$USE_MASTER" == "true" ]]; then
-          PROD_BRANCH="master"
-        fi
-
-        case "$GIT_REF" in
-          dev)            ENVIRONMENT="dev" ;;
-          staging)        ENVIRONMENT="staging" ;;
-          "$PROD_BRANCH") ENVIRONMENT="production" ;;
-          *)              ENVIRONMENT="$DEFAULT_ENVIRONMENT" ;;
-        esac
-
-        echo "environment=$ENVIRONMENT" >> "$GITHUB_OUTPUT"
-        echo "Resolved environment: $ENVIRONMENT (branch: $GIT_REF, production branch: $PROD_BRANCH)"
+        TRUNK_BASED: ${{ inputs.trunk-based }}
+        VERSION_SCHEME: ${{ inputs.version-scheme }}
+        GIT_REF: ${{ github.ref }}
+      run: bash "$GITHUB_ACTION_PATH/resolve.sh"

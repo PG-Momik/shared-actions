@@ -1,0 +1,30 @@
+name: Promote image
+description: Copy the staged image digest to production and tag it
+inputs:
+  source-registry:
+    required: true
+  target-registry:
+    required: true
+  repository:
+    required: true
+  source-tag:
+    required: true
+  target-tags:
+    required: true
+  region:
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Install crane
+      uses: imjasonh/setup-crane@6da1ae018866400525525ce74ff892880c099987
+    - name: Promote staged image
+      shell: bash
+      env:
+        SOURCE_REGISTRY: ${{ inputs.source-registry }}
+        TARGET_REGISTRY: ${{ inputs.target-registry }}
+        REPOSITORY: ${{ inputs.repository }}
+        SOURCE_TAG: ${{ inputs.source-tag }}
+        TARGET_TAGS: ${{ inputs.target-tags }}
+        REGION: ${{ inputs.region }}
+      run: bash "$GITHUB_ACTION_PATH/run.sh"

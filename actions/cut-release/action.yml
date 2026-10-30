@@ -1,0 +1,40 @@
+name: Cut release
+description: Create the next release branch and start its deploy
+inputs:
+  version-scheme:
+    required: false
+    default: calver
+  from-ref:
+    required: false
+    default: main
+  hotfix-from-tag:
+    required: false
+    default: ''
+  patch-of:
+    required: false
+    default: ''
+  semver-bump:
+    required: false
+    default: patch
+  deploy-workflow:
+    required: true
+outputs:
+  release-branch:
+    value: ${{ steps.cut.outputs.release-branch }}
+  from-sha:
+    value: ${{ steps.cut.outputs.from-sha }}
+runs:
+  using: composite
+  steps:
+    - name: Cut release branch
+      id: cut
+      shell: bash
+      env:
+        VERSION_SCHEME: ${{ inputs.version-scheme }}
+        FROM_REF: ${{ inputs.from-ref }}
+        HOTFIX_FROM_TAG: ${{ inputs.hotfix-from-tag }}
+        PATCH_OF: ${{ inputs.patch-of }}
+        SEMVER_BUMP: ${{ inputs.semver-bump }}
+        DEPLOY_WORKFLOW: ${{ inputs.deploy-workflow }}
+        GH_TOKEN: ${{ github.token }}
+      run: bash "$GITHUB_ACTION_PATH/run.sh"

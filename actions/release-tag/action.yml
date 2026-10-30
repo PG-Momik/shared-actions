@@ -1,0 +1,31 @@
+name: Tag release
+description: Tag a staged release branch and start production deploy
+inputs:
+  release-branch:
+    required: true
+  staging-registry:
+    required: true
+  repository:
+    required: true
+  deploy-workflow:
+    required: true
+outputs:
+  tag:
+    value: ${{ steps.tag.outputs.tag }}
+  sha:
+    value: ${{ steps.tag.outputs.sha }}
+runs:
+  using: composite
+  steps:
+    - name: Install crane
+      uses: imjasonh/setup-crane@6da1ae018866400525525ce74ff892880c099987
+    - name: Tag staged release
+      id: tag
+      shell: bash
+      env:
+        RELEASE_BRANCH: ${{ inputs.release-branch }}
+        STAGING_REGISTRY: ${{ inputs.staging-registry }}
+        REPOSITORY: ${{ inputs.repository }}
+        DEPLOY_WORKFLOW: ${{ inputs.deploy-workflow }}
+        GH_TOKEN: ${{ github.token }}
+      run: bash "$GITHUB_ACTION_PATH/run.sh"
