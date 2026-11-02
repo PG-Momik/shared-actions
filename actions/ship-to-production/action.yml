@@ -1,0 +1,46 @@
+name: 'Ship To Production'
+description: 'Tags a release branch tip that staging has deployed as a version tag and starts the production deploy on it'
+
+inputs:
+  release-branch:
+    description: 'Release branch to ship, such as release/2026.11.1'
+    required: true
+  deploy-workflow:
+    description: 'Workflow file name to start on the version tag, such as deploy.yml'
+    required: true
+
+outputs:
+  tag:
+    description: 'The version tag that was shipped'
+    value: ${{ steps.ship.outputs.tag }}
+  sha:
+    description: 'The commit the tag points to'
+    value: ${{ steps.ship.outputs.sha }}
+  deploy-run-url:
+    description: 'URL of the production deploy run'
+    value: ${{ steps.wait.outputs.deploy_run_url }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Tag the release and start the deploy
+      id: ship
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+        RELEASE_BRANCH: ${{ inputs.release-branch }}
+        DEPLOY_WORKFLOW: ${{ inputs.deploy-workflow }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: bash "$ACTION_PATH/ship.sh"
+    - name: Wait for the deploy
+      id: wait
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+        DEPLOY_WORKFLOW: ${{ inputs.deploy-workflow }}
+        TAG: ${{ steps.ship.outputs.tag }}
+        DISPATCHED_AT: ${{ steps.ship.outputs.dispatched_at }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: bash "$ACTION_PATH/wait.sh"

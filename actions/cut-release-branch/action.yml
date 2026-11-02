@@ -1,0 +1,66 @@
+name: 'Cut Release Branch'
+description: 'Creates the next release branch (CalVer or SemVer) from main, or a hotfix branch from a tag'
+
+inputs:
+  version-scheme:
+    description: 'calver or semver'
+    required: false
+    default: 'calver'
+  from-ref:
+    description: 'Branch to cut the release from'
+    required: false
+    default: 'main'
+  hotfix-from-tag:
+    description: 'Cut a hotfix branch from this tag instead of from-ref'
+    required: false
+    default: ''
+  patch-of:
+    description: 'Rollback only: a tag whose version family names the hotfix branch, while hotfix-from-tag supplies the code'
+    required: false
+    default: ''
+  semver-bump:
+    description: 'major, minor, or patch (semver only)'
+    required: false
+    default: 'minor'
+  deploy-workflow:
+    description: 'Workflow file name to start on the new branch, such as deploy.yml'
+    required: true
+
+outputs:
+  release-branch:
+    description: 'The release branch that was created'
+    value: ${{ steps.name.outputs.release_branch }}
+  from-sha:
+    description: 'The commit the release branch was cut from'
+    value: ${{ steps.name.outputs.from_sha }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Work out the release branch name
+      id: name
+      shell: bash
+      env:
+        VERSION_SCHEME: ${{ inputs.version-scheme }}
+        FROM_REF: ${{ inputs.from-ref }}
+        HOTFIX_FROM_TAG: ${{ inputs.hotfix-from-tag }}
+        PATCH_OF: ${{ inputs.patch-of }}
+        SEMVER_BUMP: ${{ inputs.semver-bump }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: bash "$ACTION_PATH/next-release-name.sh" >> "$GITHUB_OUTPUT"
+    - name: Create the release branch
+      shell: bash
+      env:
+        RELEASE_BRANCH: ${{ steps.name.outputs.release_branch }}
+        FROM_SHA: ${{ steps.name.outputs.from_sha }}
+      run: |
+        git push origin "$FROM_SHA:refs/heads/$RELEASE_BRANCH"
+        echo "Created \`$RELEASE_BRANCH\` from \`$FROM_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+    - name: Start the deploy
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        DEPLOY_WORKFLOW: ${{ inputs.deploy-workflow }}
+        RELEASE_BRANCH: ${{ steps.name.outputs.release_branch }}
+      # A push made with the workflow token does not trigger other workflows, so start it here.
+      run: gh workflow run "$DEPLOY_WORKFLOW" --ref "$RELEASE_BRANCH"

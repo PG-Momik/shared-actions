@@ -1,0 +1,25 @@
+name: 'Check Release Branch Fix'
+description: 'Fails a pull request into a release branch unless every commit is already on main'
+
+inputs:
+  base-branch:
+    description: 'The release branch the PR targets (defaults to github.base_ref)'
+    required: false
+    default: ''
+  trunk-branch:
+    description: 'The trunk branch fixes must land on first'
+    required: false
+    default: 'main'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check that release changes are on trunk
+      shell: bash
+      env:
+        BASE_BRANCH: ${{ inputs.base-branch || github.base_ref }}
+        TRUNK_BRANCH: ${{ inputs.trunk-branch }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        git fetch origin "refs/heads/$TRUNK_BRANCH:refs/remotes/origin/$TRUNK_BRANCH" "refs/heads/$BASE_BRANCH:refs/remotes/origin/$BASE_BRANCH"
+        bash "$ACTION_PATH/check.sh" "$BASE_BRANCH" "$TRUNK_BRANCH"
