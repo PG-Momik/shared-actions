@@ -4,21 +4,35 @@ inputs:
   existing-tag:
     required: false
     default: 'false'
+  github-release:
+    required: false
+    default: 'none'
 
 outputs:
   tag:
-    value: ${{ steps.record.outputs.tag }}
+    value: ${{ steps.record.outputs.tag || steps.release.outputs.tag }}
 
 runs:
   using: 'composite'
   steps:
     - name: Dummy step 1
       id: record
+      if: inputs.github-release == 'none'
       shell: bash
       env:
         EXISTING_TAG: ${{ inputs.existing-tag }}
         GIT_REF: ${{ github.ref }}
       run: bash "$GITHUB_ACTION_PATH/record.sh"
+
+    - name: Dummy step 1 (github release)
+      id: release
+      if: inputs.github-release != 'none'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+        GITHUB_RELEASE: ${{ inputs.github-release }}
+      run: bash "$GITHUB_ACTION_PATH/github-release.sh"
 
     - name: Dummy step 2
       shell: bash

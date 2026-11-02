@@ -18,7 +18,7 @@ outputs:
   environment:
     value: ${{ steps.resolve.outputs.environment }}
   release-branch:
-    value: ${{ steps.resolve.outputs.release-branch }}
+    value: ${{ steps.resolve.outputs.release_branch }}
 
 runs:
   using: 'composite'
@@ -31,5 +31,4 @@ runs:
         DEFAULT_ENVIRONMENT: ${{ inputs.default-environment }}
         TRUNK_BASED: ${{ inputs.trunk-based }}
         VERSION_SCHEME: ${{ inputs.version-scheme }}
-        GIT_REF: ${{ github.ref }}
       run: bash "$GITHUB_ACTION_PATH/resolve.sh"
